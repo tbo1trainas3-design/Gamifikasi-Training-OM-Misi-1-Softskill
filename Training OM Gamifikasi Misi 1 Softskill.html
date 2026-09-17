@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Office Manager: Detektif Area OM</title>
+    <!-- Tailwind CSS for modern responsive UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        neoYellow: '#FACC15',
+                        neoPink: '#F43F5E',
+                        neoBlue: '#38BDF8',
+                        neoDark: '#1E293B',
+                        neoGreen: '#22C55E',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8FAFC;
+            color: #1E293B;
+        }
+        .neo-box {
+            border: 3px solid #1E293B;
+            box-shadow: 4px 4px 0px #1E293B;
+            transition: all 0.1s ease;
+        }
+        .neo-box:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 6px 6px 0px #1E293B;
+        }
+        .neo-box:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #1E293B;
+        }
+        .neo-box-static {
+            border: 3px solid #1E293B;
+            box-shadow: 4px 4px 0px #1E293B;
+        }
+        .modal-overlay {
+            background-color: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(4px);
+        }
+        .data-row {
+            transition: all 0.15s ease;
+        }
+        .data-row:hover {
+            background-color: #334155;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-6 bg-slate-50">
+
+    <header class="w-full max-w-2xl mx-auto flex justify-between items-center mb-4">
+        <div class="flex items-center gap-2">
+            <div class="bg-neoYellow neo-box-static px-3 py-1 font-black text-sm uppercase tracking-wider rounded-lg flex items-center gap-2">
+                <i class="fa-solid fa-gamepad"></i> LMS Gamification
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button id="muteBtn" onclick="toggleAudio()" class="bg-white neo-box px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-2 hover:bg-slate-100 cursor-pointer">
+                <i id="audioIcon" class="fa-solid fa-volume-high text-neoPink"></i> <span id="audioText">BGM: ON</span>
+            </button>
+            <div id="scoreDisplay" class="bg-neoPink text-white neo-box-static px-3 py-1 font-black text-sm rounded-lg hidden">
+                Score: <span id="currentScore">0</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="w-full max-w-2xl mx-auto flex-grow flex flex-col justify-center">
+
+        <!-- SCREEN 1: Gateway & Mission Briefing (Input Nama & NIK) -->
+        <div id="screenGateway" class="bg-white neo-box-static p-6 md:p-8 rounded-2xl relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 w-32 h-32 bg-neoYellow rounded-full border-4 border-neoDark opacity-25 pointer-events-none"></div>
+            
+            <div class="text-center mb-6">
+                <span class="bg-neoBlue text-neoDark text-xs font-black uppercase px-3 py-1 neo-box-static rounded-md inline-block mb-2">Misi 1: Detektif Area OM</span>
+                <h1 class="text-2xl md:text-3xl font-black text-neoDark tracking-tight">Challenge: Mata Elang</h1>
+                <p class="text-xs md:text-sm text-slate-600 mt-1 font-semibold">Terapkan Trik Garis Gerbang 3 Detik (Format, Label, Anomali)</p>
+            </div>
+
+            <!-- Form Input Nama & NIK -->
+            <form id="gatewayForm" onsubmit="handleGatewaySubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Nama Lengkap (Alfabet Saja):</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" id="inputName" required oninput="validateNameInput(this)" placeholder="Contoh: Budi Santoso" 
+                            class="w-full pl-10 pr-4 py-3 bg-white neo-box rounded-xl font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-neoBlue">
+                    </div>
+                    <p id="nameError" class="text-xs text-neoPink mt-1 hidden font-bold">Hanya boleh diisi huruf alfabet dan spasi!</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Nomor Induk Karyawan / NIK (Angka Saja):</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-id-card"></i>
+                        </span>
+                        <input type="text" id="inputNik" required oninput="validateNikInput(this)" placeholder="Contoh: 2026001" 
+                            class="w-full pl-10 pr-4 py-3 bg-white neo-box rounded-xl font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-neoBlue">
+                    </div>
+                    <p id="nikError" class="text-xs text-neoPink mt-1 hidden font-bold">Hanya boleh diisi angka!</p>
+                </div>
+
+                <!-- Mission Objective & Rules Box -->
+                <div class="bg-slate-100 neo-box-static p-4 rounded-xl text-xs space-y-2">
+                    <p class="font-black uppercase text-neoDark"><i class="fa-solid fa-bullseye text-neoPink"></i> MISSION OBJECTIVE & PERATURAN:</p>
+                    <ul class="list-disc list-inside space-y-1 text-slate-700 font-medium">
+                        <li>Anda akan melalui 1 sesi uji coba dan 3 Skenario Laporan Operasional secara bertahap.</li>
+                        <li>Temukan dan klik baris laporan yang mengandung kesalahan (Format, Label, atau Anomali Angka).</li>
+                        <li>Manfaatkan batas waktu 3 detik per pemeriksaan laporan untuk menguji kepekaan mata elang Anda!</li>
+                    </ul>
+                </div>
+
+                <button type="submit" class="w-full bg-neoYellow hover:bg-yellow-300 text-neoDark neo-box py-4 rounded-xl font-black text-base uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer">
+                    <span>Mulai Misi Sekarang</span> <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- SCREEN 2: Core Execution (Spot the Error Game Arena) -->
+        <div id="screenGame" class="bg-white neo-box-static p-6 md:p-8 rounded-2xl hidden relative">
+            
+            <!-- Progress & Stats Bar -->
+            <div class="flex justify-between items-center mb-4 pb-3 border-b-2 border-slate-200">
+                <div>
+                    <span id="levelIndicator" class="bg-neoBlue text-neoDark text-xs font-black uppercase px-2.5 py-1 neo-box-static rounded-md">Uji Coba / Skenario 1</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-xs font-black uppercase text-slate-600">Progress: <span id="progressText" class="text-neoPink">0%</span></div>
+                    <div class="w-24 bg-slate-200 h-3 neo-box-static rounded-full overflow-hidden">
+                        <div id="progressBar" class="bg-neoGreen h-full w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 1: Inspection Standard Card (Shown First) -->
+            <div id="standardInspectionCard" class="mb-4">
+                <div class="bg-amber-50 neo-box-static p-5 rounded-xl mb-4 border-l-8 border-neoYellow">
+                    <span class="text-xs font-black text-amber-800 uppercase tracking-wider"><i class="fa-solid fa-magnifying-glass"></i> STANDAR INSPEKSI 3-DETIK</span>
+                    <h3 id="scenarioTitle" class="text-lg font-black text-neoDark mt-1">Uji Coba Laporan</h3>
+                    <p id="scenarioDesc" class="text-xs md:text-sm text-slate-700 mt-2 font-medium leading-relaxed">
+                        Berikut adalah contoh soal. Tugas Anda adalah memeriksa baris data berikut. Cari baris yang melanggar standar verifikasi jangkar yaitu tanda mata uangnya hilang. Karena OM harus memiliki ketelitian yang baik, maka tolong selesaikan tiap soal selama 3 detik saja. Gunakan contoh soal berikut sebagai latihan sebelum mengerjakan soal asli!
+                    </p>
+                </div>
+                <button onclick="revealSpreadsheet()" class="w-full bg-neoYellow hover:bg-yellow-300 text-neoDark neo-box py-3.5 rounded-xl font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer">
+                    <span>Mulai Periksa Data</span> <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- STEP 2: Spreadsheet Data Simulation (Hidden until Start Inspecting is clicked) -->
+            <div id="spreadsheetSection" class="hidden">
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <span class="text-xs font-black uppercase text-slate-600"><i class="fa-solid fa-table text-neoBlue"></i> Klik Baris Laporan yang Eror:</span>
+                    <span id="timerText" class="bg-neoPink text-white font-black text-xs px-2.5 py-0.5 rounded-md neo-box-static"><i class="fa-regular fa-clock"></i> 03s</span>
+                </div>
+                
+                <div id="spreadsheetContainer" class="bg-slate-950 text-slate-100 p-3 neo-box-static rounded-xl overflow-x-auto text-xs font-mono space-y-2">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: Post-Action Debrief (Result & Feedback) -->
+        <div id="screenDebrief" class="bg-white neo-box-static p-6 md:p-8 rounded-2xl hidden text-center">
+            <div id="debriefBadgeIcon" class="w-20 h-20 bg-neoYellow neo-box-static mx-auto rounded-full flex items-center justify-center text-3xl mb-4 text-neoDark">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            
+            <h2 id="debriefTitle" class="text-2xl font-black text-neoDark uppercase tracking-tight">Misi Selesai!</h2>
+            <p id="debriefSubtitle" class="text-xs font-bold text-slate-600 mt-1">Laporan Hasil Evaluasi Mata Elang & Verifikasi Jangkar</p>
+
+            <!-- Scorecard Summary -->
+            <div class="my-6 bg-slate-100 neo-box-static p-4 rounded-xl text-left space-y-3">
+                <div class="flex justify-between items-center text-sm font-bold border-b border-slate-200 pb-2">
+                    <span>Nama Peserta:</span>
+                    <span id="resultName" class="text-neoDark font-black"></span>
+                </div>
+                <div class="flex justify-between items-center text-sm font-bold border-b border-slate-200 pb-2">
+                    <span>Nomor Induk Karyawan (NIK):</span>
+                    <span id="resultNik" class="text-neoDark font-black"></span>
+                </div>
+                <div class="flex justify-between items-center text-sm font-bold border-b border-slate-200 pb-2">
+                    <span>Total Poin Diperoleh:</span>
+                    <span id="resultScore" class="text-neoPink font-black">0 / 300</span>
+                </div>
+                <div class="flex justify-between items-center text-sm font-bold">
+                    <span>Badge Kehormatan:</span>
+                    <span id="resultBadge" class="bg-neoYellow px-2.5 py-1 neo-box-static rounded text-xs">Inspector Master</span>
+                </div>
+            </div>
+
+            <!-- Positive Reinforcement / Feedback Message -->
+            <div id="reinforcementBox" class="bg-emerald-50 neo-box-static p-4 rounded-xl mb-6 text-left border-l-8 border-neoGreen">
+                <h4 class="font-black text-xs uppercase tracking-wider text-emerald-800"><i class="fa-solid fa-award"></i> Status & Umpan Balik Instruktural</h4>
+                <p id="reinforcementText" class="text-xs md:text-sm text-emerald-900 mt-1 font-medium">
+                    Mata Elang! Anda Sukses Menjaga Standar Laporan! Insting verifikasi jangkar Anda terbukti sangat tajam dan akurat.
+                </p>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="restartGame()" class="flex-1 bg-neoYellow hover:bg-yellow-300 text-neoDark neo-box py-3 rounded-xl font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-rotate-right"></i> Ulangi Simulasi
+                </button>
+                <button onclick="showFeedbackModal()" class="flex-1 bg-neoBlue hover:bg-sky-400 text-neoDark neo-box py-3 rounded-xl font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-comment-dots"></i> Evaluasi & Saran
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Custom Feedback & Evaluation Modal -->
+    <div id="feedbackModal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white neo-box-static w-full max-w-md p-6 rounded-2xl relative max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 border-b-2 border-slate-200 pb-3">
+                <h3 class="font-black text-lg text-neoDark uppercase"><i class="fa-solid fa-circle-question text-neoPink"></i> Evaluasi Gamifikasi</h3>
+                <button onclick="closeFeedbackModal()" class="text-slate-500 hover:text-neoDark font-black text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="text-xs space-y-3 text-slate-700 font-medium leading-relaxed mb-6">
+                <p class="font-bold text-neoDark">Halo Bapak/Ibu, silakan periksa dan berikan tanggapan terkait gamifikasi di atas melalui poin-poin berikut:</p>
+                <ol class="list-decimal list-inside space-y-2 pl-1">
+                    <li><strong>UI & Visual:</strong> Apakah gaya Neo-Brutalism dengan simulasi spreadsheet ini sudah sesuai?</li>
+                    <li><strong>Audio & SFX:</strong> Apakah BGM Web Audio API dan sound effect terdengar dengan baik di perangkat Anda?</li>
+                    <li><strong>Jumlah Skenario / Soal:</strong> Apakah 1 soal uji coba + 3 skenario deteksi eror ini sudah pas, atau perlu ditambah/dikurangi?</li>
+                    <li><strong>Mekanik Game:</strong> Apakah alur pemeriksaan standar 3 detik lalu lanjut ke data spreadsheet sudah interaktif dan edukatif?</li>
+                </ol>
+                <div class="bg-amber-50 neo-box-static p-3 rounded-lg text-amber-900 mt-2">
+                    <p class="font-bold"><i class="fa-solid fa-camera"></i> Tips Perbaikan:</p>
+                    <p class="mt-1">Apabila ada bagian yang perlu disesuaikan, silakan lakukan screenshot bagian tersebut dan kirimkan catatan perbaikannya kepada tim pengembang.</p>
+                </div>
+            </div>
+
+            <button onclick="closeFeedbackModal()" class="w-full bg-neoPink text-white neo-box py-3 rounded-xl font-black text-sm uppercase tracking-wider cursor-pointer">
+                Tutup & Kembali ke Game
+            </button>
+        </div>
+    </div>
+
+    <footer class="w-full text-center py-2 text-xs font-bold text-slate-500 tracking-wider">
+        Education & Training Dept. © 2026
+    </footer>
+
+    <script>
+        let userData = { name: '', nik: '' };
+        let currentScenarioIndex = 0;
+        let score = 0;
+        let isMuted = false;
+        let countdownTimer = null;
+        let timeLeft = 3;
+
+        // Web Audio API Sound Synthesizer
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        let bgmInterval = null;
+        function startBGM() {
+            if (isMuted) return;
+            initAudio();
+            if (bgmInterval) clearInterval(bgmInterval);
+
+            const notes = [220.00, 277.18, 329.63, 440.00, 369.99, 293.66];
+            let step = 0;
+
+            bgmInterval = setInterval(() => {
+                if (isMuted || !audioCtx) return;
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(notes[step % notes.length], audioCtx.currentTime);
+                    
+                    gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.25);
+                    step++;
+                } catch(e) {}
+            }, 400);
+        }
+
+        function stopBGM() {
+            if (bgmInterval) clearInterval(bgmInterval);
+        }
+
+        function toggleAudio() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('audioIcon');
+            const text = document.getElementById('audioText');
+            if (isMuted) {
+                icon.className = "fa-solid fa-volume-xmark text-slate-400";
+                text.innerText = "BGM: OFF";
+                stopBGM();
+            } else {
+                icon.className = "fa-solid fa-volume-high text-neoPink";
+                text.innerText = "BGM: ON";
+                startBGM();
+            }
+        }
+
+        function playSFX(type) {
+            if (isMuted) return;
+            initAudio();
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1046.50, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(90, audioCtx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                }
+            } catch(e) {}
+        }
+
+        function validateNameInput(input) {
+            let filtered = input.value.replace(/[^A-Za-z\s]/g, '');
+            if (filtered !== input.value) {
+                document.getElementById('nameError').classList.remove('hidden');
+            } else {
+                document.getElementById('nameError').classList.add('hidden');
+            }
+            input.value = filtered;
+        }
+
+        function validateNikInput(input) {
+            let filtered = input.value.replace(/[^0-9]/g, '');
+            if (filtered !== input.value) {
+                document.getElementById('nikError').classList.remove('hidden');
+            } else {
+                document.getElementById('nikError').classList.add('hidden');
+            }
+            input.value = filtered;
+        }
+
+        const scenarios = [
+            {
+                isTrial: true,
+                title: "Uji Coba Laporan Kasir",
+                desc: "Berikut adalah contoh soal. Tugas Anda adalah memeriksa baris data berikut. Cari baris yang melanggar standar verifikasi jangkar yaitu tanda mata uangnya hilang. Karena OM harus memiliki ketelitian yang baik, maka tolong selesaikan tiap soal selama 3 detik saja. Gunakan contoh soal berikut sebagai latihan sebelum mengerjakan soal asli!",
+                rows: [
+                    { id: 1, text: "Row 01 | ID: TRX-01 | Nominal: Rp 50.000 | Status: VALID", isError: false },
+                    { id: 2, text: "Row 02 | ID: TRX-02 | Nominal: 150000.00 | Status: VALID", isError: true, errorType: "Label Mata Uang Hilang" },
+                    { id: 3, text: "Row 03 | ID: TRX-03 | Nominal: Rp 100.000 | Status: VALID", isError: false }
+                ]
+            },
+            {
+                isTrial: false,
+                title: "Laporan Kasir & Transaksi Harian",
+                desc: "Periksa baris data laporan di bawah ini. Terapkan trik 3 detik untuk menemukan baris dengan anomali nominal atau format label yang tidak wajar.",
+                rows: [
+                    { id: 1, text: "Row 01 | ID: TRX-101 | Label: Rp 150.000 | Status: VALID", isError: false },
+                    { id: 2, text: "Row 02 | ID: TRX-102 | Label: Rp 250.000 | Status: VALID", isError: false },
+                    { id: 3, text: "Row 03 | ID: TRX-103 | Label: 85000000.00 | Status: VALID", isError: true, errorType: "Label Mata Uang Hilang / Anomali Nominal" },
+                    { id: 4, text: "Row 04 | ID: TRX-104 | Label: Rp 75.000 | Status: VALID", isError: false }
+                ]
+            },
+            {
+                isTrial: false,
+                title: "Laporan Inventaris Cabang",
+                desc: "Tolong baca baik-baik baris laporan inventaris gudang berikut. Cek anomali angka dan format link/tautan dokumen yang tidak sesuai standar operasional.",
+                rows: [
+                    { id: 1, text: "Row 01 | Item: ATK Kantor | Qty: 45 Box | Link: /inv/atk", isError: false },
+                    { id: 2, text: "Row 02 | Item: Kertas A4 | Qty: 120 Rim | Link: xxxxx_error", isError: true, errorType: "Format Tautan / Link Rusak" },
+                    { id: 3, text: "Row 03 | Item: Tinta Printer | Qty: 12 Pcs | Link: /inv/tinta", isError: false },
+                    { id: 4, text: "Row 04 | Item: Spidol Board | Qty: 20 Pcs | Link: /inv/spidol", isError: false }
+                ]
+            },
+            {
+                isTrial: false,
+                title: "Laporan Rekonsiliasi Kas Kecil",
+                desc: "Periksa rekonsiliasi kas kecil divisi. Temukan baris data yang mengalami lonjakan anomali angka pengeluaran secara drastis.",
+                rows: [
+                    { id: 1, text: "Row 01 | Ket: Konsumsi Rapat | Nominal: Rp 350.000", isError: false },
+                    { id: 2, text: "Row 02 | Ket: Pembelian ATK | Nominal: Rp 120.000", isError: false },
+                    { id: 3, text: "Row 03 | Ket: Biaya Kurir Dokumen | Nominal: Rp 45.000", isError: false },
+                    { id: 4, text: "Row 04 | Ket: Perbaikan AC | Nominal: Rp 98.000.000", isError: true, errorType: "Lonjakan Anomali Angka Tidak Wajar" }
+                ]
+            }
+        ];
+
+        function handleGatewaySubmit(event) {
+            event.preventDefault();
+            const name = document.getElementById('inputName').value.trim();
+            const nik = document.getElementById('inputNik').value.trim();
+
+            if (!name || !nik) return;
+
+            userData = { name, nik };
+            document.getElementById('scoreDisplay').classList.remove('hidden');
+
+            document.getElementById('screenGateway').classList.add('hidden');
+            document.getElementById('screenGame').classList.remove('hidden');
+
+            startBGM();
+            loadScenarioStep1();
+        }
+
+        function loadScenarioStep1() {
+            if (countdownTimer) clearInterval(countdownTimer);
+
+            const scn = scenarios[currentScenarioIndex];
+            if (scn.isTrial) {
+                document.getElementById('levelIndicator').innerText = `Sesi Uji Coba`;
+            } else {
+                document.getElementById('levelIndicator').innerText = `Laporan ${currentScenarioIndex} / ${scenarios.length - 1}`;
+            }
+
+            document.getElementById('scenarioTitle').innerText = scn.title;
+            document.getElementById('scenarioDesc').innerText = scn.desc;
+
+            const progressPct = Math.round((currentScenarioIndex / scenarios.length) * 100);
+            document.getElementById('progressBar').style.width = `${progressPct}%`;
+            document.getElementById('progressText').innerText = `${progressPct}%`;
+
+            // Show standard inspection card, hide spreadsheet
+            document.getElementById('standardInspectionCard').classList.remove('hidden');
+            document.getElementById('spreadsheetSection').classList.add('hidden');
+        }
+
+        function revealSpreadsheet() {
+            // Hide standard card, show spreadsheet
+            document.getElementById('standardInspectionCard').classList.add('hidden');
+            document.getElementById('spreadsheetSection').classList.remove('hidden');
+
+            timeLeft = 3;
+            updateTimerDisplay();
+
+            const scn = scenarios[currentScenarioIndex];
+            const container = document.getElementById('spreadsheetContainer');
+            container.innerHTML = '';
+
+            scn.rows.forEach((row) => {
+                const div = document.createElement('div');
+                div.className = "data-row p-3 bg-slate-900 border border-slate-800 rounded-lg cursor-pointer flex items-center justify-between text-xs md:text-sm font-mono";
+                div.innerHTML = `<span>${row.text}</span> <span class="text-slate-500 text-[10px] uppercase font-bold">[Cek Baris]</span>`;
+                div.onclick = () => handleRowSelection(row.isError, row.errorType, scn.isTrial);
+                container.appendChild(div);
+            });
+
+            if (countdownTimer) clearInterval(countdownTimer);
+            countdownTimer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(countdownTimer);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const timerEl = document.getElementById('timerText');
+            timerEl.innerHTML = `<i class="fa-regular fa-clock"></i> 0${Math.max(0, timeLeft)}s`;
+        }
+
+        function handleRowSelection(isError, errorType, isTrial) {
+            if (countdownTimer) clearInterval(countdownTimer);
+
+            if (isError) {
+                if (!isTrial) {
+                    score += 100;
+                    document.getElementById('currentScore').innerText = score;
+                }
+                playSFX('correct');
+                const feedbackMsg = isTrial 
+                    ? `Uji Coba Berhasil! Anda tepat menemukan baris error: "${errorType}". Sesi latihan selesai, mari masuk ke Misi Utama!`
+                    : `Mata Elang Berhasil! Anda tepat menemukan baris error: "${errorType}" dalam waktu instan.`;
+                showInstantFeedbackModal(true, feedbackMsg);
+            } else {
+                playSFX('wrong');
+                showInstantFeedbackModal(false, `Kurang Tepat! Baris yang Anda pilih adalah data normal. Baris tersebut tidak melanggar standar verifikasi jangkar.`);
+            }
+        }
+
+        function showInstantFeedbackModal(isCorrect, text) {
+            const modalId = 'instantModal';
+            let existing = document.getElementById(modalId);
+            if (existing) existing.remove();
+
+            const div = document.createElement('div');
+            div.id = modalId;
+            div.className = "fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4";
+            div.innerHTML = `
+                <div class="bg-white neo-box-static w-full max-w-md p-6 rounded-2xl text-center">
+                    <div class="w-16 h-16 ${isCorrect ? 'bg-neoGreen text-white' : 'bg-neoPink text-white'} neo-box-static mx-auto rounded-full flex items-center justify-center text-2xl mb-4">
+                        <i class="fa-solid ${isCorrect ? 'fa-check' : 'fa-xmark'}"></i>
+                    </div>
+                    <h3 class="text-xl font-black text-neoDark uppercase">${isCorrect ? 'Mata Elang Sukses!' : 'Pemeriksaan Meleset!'}</h3>
+                    <p class="text-xs md:text-sm text-slate-700 mt-2 font-medium leading-relaxed">${text}</p>
+                    <button onclick="dismissInstantModal()" class="mt-6 w-full ${isCorrect ? 'bg-neoYellow hover:bg-yellow-300' : 'bg-neoDark text-white'} neo-box py-3 rounded-xl font-black text-sm uppercase tracking-wider cursor-pointer">
+                        Lanjutkan Misi <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(div);
+        }
+
+        function dismissInstantModal() {
+            const modal = document.getElementById('instantModal');
+            if (modal) modal.remove();
+
+            currentScenarioIndex++;
+            if (currentScenarioIndex < scenarios.length) {
+                loadScenarioStep1();
+            } else {
+                finishGame();
+            }
+        }
+
+        function finishGame() {
+            stopBGM();
+            document.getElementById('screenGame').classList.add('hidden');
+            document.getElementById('scoreDisplay').classList.add('hidden');
+            document.getElementById('screenDebrief').classList.remove('hidden');
+
+            document.getElementById('resultName').innerText = userData.name;
+            document.getElementById('resultNik').innerText = userData.nik;
+            document.getElementById('resultScore').innerText = `${score} / 300`;
+
+            const badgeElem = document.getElementById('resultBadge');
+            const reinforcementElem = document.getElementById('reinforcementText');
+            const badgeIconElem = document.getElementById('debriefBadgeIcon');
+
+            if (score === 300) {
+                badgeElem.innerText = "Master Inspector 🏆";
+                badgeIconElem.innerHTML = '<i class="fa-solid fa-crown text-amber-500"></i>';
+                reinforcementElem.innerText = "Mata Elang! Anda Sukses Menjaga Standar Laporan! Insting verifikasi jangkar Anda terbukti sangat tajam dan akurat.";
+            } else if (score >= 200) {
+                badgeElem.innerText = "Senior Detective OM ⭐";
+                badgeIconElem.innerHTML = '<i class="fa-solid fa-medal text-slate-700"></i>';
+                reinforcementElem.innerText = "Kerja bagus! Ketelitian visual Anda sudah sangat baik. Pertahankan kedisiplinan trik 3 detik dalam setiap inspeksi laporan harian.";
+            } else {
+                badgeElem.innerText = "Developing Inspector 💡";
+                badgeIconElem.innerHTML = '<i class="fa-solid fa-seedling text-emerald-600"></i>';
+                reinforcementElem.innerText = "Tetap semangat! Anda sedang mengasah ketajaman verifikasi format, label, dan anomali data. Coba ulangi simulasi untuk hasil yang lebih sempurna.";
+            }
+        }
+
+        function restartGame() {
+            currentScenarioIndex = 0;
+            score = 0;
+            document.getElementById('inputName').value = '';
+            document.getElementById('inputNik').value = '';
+            document.getElementById('screenDebrief').classList.add('hidden');
+            document.getElementById('screenGateway').classList.remove('hidden');
+        }
+
+        function showFeedbackModal() {
+            document.getElementById('feedbackModal').classList.remove('hidden');
+        }
+
+        function closeFeedbackModal() {
+            document.getElementById('feedbackModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
